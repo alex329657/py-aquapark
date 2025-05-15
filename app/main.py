@@ -12,9 +12,16 @@ class IntegerRange:
         self._name = f"_{name}"
 
     def __get__(self, instance: Any, owner: Any) -> Any:
-        return self
+        if instance is None:
+            return self
+        return getattr(instance, self._name, self)
 
     def __set__(self, instance: Any, value: int) -> None:
+        if not (self.min_amount <= value <= self.max_amount):
+            raise ValueError(
+                f"{value} is not in range [{self.min_amount}, "
+                f"{self.max_amount}]"
+            )
         setattr(instance, self._name, value)
 
 
@@ -39,11 +46,12 @@ class ChildrenSlideLimitationValidator(SlideLimitationValidator):
 
     def validate(self, visitor: Visitor) -> bool:
         return (
-            self.age.min_amount <= visitor.age <= self.age.max_amount
-            and self.height.min_amount <= visitor.height
-            <= self.height.max_amount
-            and self.weight.min_amount <= visitor.weight
-            <= self.weight.max_amount
+            type(self).age.min_amount <= visitor.age
+            <= type(self).age.max_amount
+            and type(self).height.min_amount <= visitor.height
+            <= type(self).height.max_amount
+            and type(self).weight.min_amount <= visitor.weight
+            <= type(self).weight.max_amount
         )
 
 
@@ -54,11 +62,12 @@ class AdultSlideLimitationValidator(SlideLimitationValidator):
 
     def validate(self, visitor: Visitor) -> bool:
         return (
-            self.age.min_amount <= visitor.age <= self.age.max_amount
-            and self.height.min_amount <= visitor.height
-            <= self.height.max_amount
-            and self.weight.min_amount <= visitor.weight
-            <= self.weight.max_amount
+            type(self).age.min_amount <= visitor.age
+            <= type(self).age.max_amount
+            and type(self).height.min_amount <= visitor.height
+            <= type(self).height.max_amount
+            and type(self).weight.min_amount <= visitor.weight
+            <= type(self).weight.max_amount
         )
 
 
@@ -66,6 +75,7 @@ class Slide:
     def __init__(self, name: str,
                  limitation_class: SlideLimitationValidator) -> None:
         self.name = name
+        # підтримка як класу, так і інстансу
         if isinstance(limitation_class, type):
             self.limitation_validator = limitation_class()
         else:
